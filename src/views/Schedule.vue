@@ -1,6 +1,6 @@
 <template>
-  <div class="schedule">
-    <div class="schedule-container">
+  <div class="schedules">
+    <div class="schedules-container">
       <form class="form">
         <div class="form__field">
           <label for="slug" class="form__label">
@@ -8,30 +8,81 @@
           </label>
           <input type="text" class="form__input" v-model="slug" id="slug" />
         </div>
-        <button type="submit" class="form__btn">Обновить</button>
+        <button type="submit" class="form__btn" @click.prevent="getSchedules">
+          Обновить
+        </button>
       </form>
+      <pulse-loader
+        :loading="status == 'loading'"
+        color="#ee514a"
+        size="20px"
+        class="loader"
+      ></pulse-loader>
+      <div class="error" v-if="status == 'error'">
+        {{ error }}
+      </div>
+      <div class="schedules-list" v-else-if="status == 'success'">
+        <ScheduleItem
+          v-for="schedule in schedules"
+          :key="schedule.id"
+          :schedule="schedule"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
+import ScheduleItem from '@/components/ScheduleItem';
+import PulseLoader from 'vue-spinner/src/PulseLoader.vue';
+
 export default {
   name: 'schedule',
+  components: {
+    ScheduleItem,
+    PulseLoader,
+  },
   data() {
     return {
       slug: null,
+      error: '',
     };
   },
-  methods: {},
+  computed: {
+    ...mapGetters('schedule', ['schedules', 'status']),
+  },
+  methods: {
+    getSchedules() {
+      this.$store
+        .dispatch('schedule/fetchSchedules', this.slug)
+        .catch((err) => {
+          this.error = err;
+        });
+    },
+  },
 };
 </script>
 
 <style lang="scss">
-.schedule {
+.schedules {
+  &-list {
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    width: 100%;
+    padding: 10px;
+    .schedule {
+      &:last-child {
+        margin: 0;
+        padding: 0;
+        border: none;
+      }
+    }
+  }
   &-container {
-    margin-top: 45px;
-    margin-left: 41px;
-    min-width: 610px;
+    margin: 10px auto;
+    width: 610px;
   }
   .form {
     margin-bottom: 40px;
@@ -69,5 +120,9 @@ export default {
       height: 50px;
     }
   }
+}
+
+.loader {
+  text-align: center;
 }
 </style>
